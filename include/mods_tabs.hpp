@@ -14,7 +14,5 @@ struct ModInfo {
 
 class ModsList{
     public:
-        brls::List* arcModsList();
         std::vector<brls::ListItem*> skylinePlugins();
-        brls::List* workspaces();
 };

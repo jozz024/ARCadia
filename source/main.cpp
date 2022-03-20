@@ -27,8 +27,7 @@
 #include "config.hpp"
 #include "mods_tabs.hpp"
 
-#define BOREALIS_APP_TITLE "ARCadia"
-#define ARCROPOLIS_NRO "sdmc://atmosphere/contents/01006A800016E000/romfs/skyline/plugins/libarcropolis.nro"
+#define BOREALIS_APP_TITLE "Ultimate Plugin Toggler"
 #define SUBSDK_9 "sdmc://atmosphere/contents/01006A800016E000/exefs/subsdk9"
 #define MAIN_NPDM "sdmc://atmosphere/contents/01006A800016E000/exefs/main.npdm"
 #define ROM_PATH "sd://atmosphere/contents/01006A800016E000/romfs/"
@@ -48,134 +47,95 @@ int main(int argc, char* argv[])
     // Create a sample view
     brls::TabFrame* rootFrame = new brls::TabFrame();
     rootFrame->setTitle(BOREALIS_APP_TITLE);
-    rootFrame->setIcon(BOREALIS_ASSET("icon/icon_transparent.png"));
 
     ModsList mods;
 
-    Config::updateSystemSettings();
 
-    if (!Config::initConfig())
-    {
-        brls::Dialog* dialog = new brls::Dialog("ARCropolis config file not detected!\nPlease run Smash Ultimate with ARCropolis set up!");
-
-        brls::GenericEvent::Callback launchCallback = [dialog](brls::View* view) {
-            dialog->close();
-            appletRequestLaunchApplication(0x01006A800016E000, NULL);
-            brls::Application::quit();
-        };
-
-        dialog->addButton("Launch Smash Ultimate", launchCallback);
-
-        dialog->setCancelable(false);
-
-        dialog->open();
-    }
-    else
-    {
-        ARCadiaConfig::initConfig();
-
-        if (Config::config_info.paths.umm.rfind("rom:/", 0) == 0) {
-            Config::replace(Config::config_info.paths.umm, "rom:/", ROM_PATH); 
-        }
-
-        if(!std::filesystem::exists(MAIN_NPDM))
-            rootFrame->setFooterText("main.npdm is missing!");
-        else if(!std::filesystem::exists(SUBSDK_9))
-            rootFrame->setFooterText("subsdk_9 is missing!");
-        else if (!std::filesystem::exists(ARCROPOLIS_NRO))
-            rootFrame->setFooterText("libarcropolis.nro is missing!");
-        else
-            rootFrame->setFooterText("ARCropolis Version: " + std::string(Config::config_info.infos.version));
-
-        rootFrame->registerAction("Launch Smash Ultimate", brls::Key::X, [] {
-            appletRequestLaunchApplication(0x01006A800016E000, NULL);
-            return true;
-        });
-
-        brls::List* optionsList = new brls::List();
-
-        brls::SelectListItem* sortOption = new brls::SelectListItem(
-            "Sort By",
-            { "Name", "Date Modified" });
-
-        brls::ListItem* sortOrder = new brls::ListItem("Sort By Descending");
-        sortOrder->getClickEvent()->subscribe([sortOrder](brls::View* view) {
-            if(ARCadiaConfig::sort_desc){
-                ARCadiaConfig::sort_desc = false;
-                sortOrder->setChecked(false);
-            }else{
-                ARCadiaConfig::sort_desc = true;
-                sortOrder->setChecked(true);
-            }
-            
-            if(!ARCadiaConfig::write("config", "sort_desc", std::to_string(ARCadiaConfig::sort_desc))){
-                brls::Application::notify("Failed writing to config file!");
-            }
-
-        });
-
-        sortOrder->setChecked(ARCadiaConfig::sort_desc);
-
-        sortOption->getValueSelectedEvent()->subscribe([=](size_t selection) {
-            std::string selected_sort;
-
-            switch(selection){
-                case 0:
-                    selected_sort = "name";
-                    break;
-                case 1:
-                    selected_sort = "dateM";
-                    break;
-                default:
-                    selected_sort = "name";
-            }
-
-            if(ARCadiaConfig::write("config", "sort_option", selected_sort)){
-                ARCadiaConfig::sort_option = selected_sort;
-            }else{
-                brls::Application::notify("Failed writing to config file!");
-            };
-        });
-
-        std::string sort_option = ARCadiaConfig::sort_option;
-
-        if (sort_option == "name")
-        {
-            sortOption->setSelectedValue(0);
-        }
-        else if (sort_option == "dateM")
-        {
-            sortOption->setSelectedValue(1);
-        }
-
-        optionsList->addView(sortOption);
-        optionsList->addView(sortOrder);
-        brls::Label* skylinePluginsLabel = new brls::Label(brls::LabelStyle::REGULAR, "Skyline Plugins", true);
-        optionsList->addView(skylinePluginsLabel);
+    ARCadiaConfig::initConfig();
 
 
-        for(auto view : mods.skylinePlugins()){
-            optionsList->addView(view);
-        }
 
-        std::string res = Config::config_info.paths.umm;
+    if(!std::filesystem::exists(MAIN_NPDM))
+        rootFrame->setFooterText("main.npdm is missing!");
+    else if(!std::filesystem::exists(SUBSDK_9))
+        rootFrame->setFooterText("subsdk_9 is missing!");
 
-        Config::replace(res, "sd:", "sdmc:");
+    rootFrame->registerAction("Launch Smash Ultimate", brls::Key::X, [] {
+        appletRequestLaunchApplication(0x01006A800016E000, NULL);
+        return true;
+    });
 
-        if(std::filesystem::exists(res)){
-            rootFrame->addTab("Mods", mods.arcModsList());
+    brls::List* optionsList = new brls::List();
+
+    brls::SelectListItem* sortOption = new brls::SelectListItem(
+        "Sort By",
+        { "Name", "Date Modified" });
+
+    brls::ListItem* sortOrder = new brls::ListItem("Sort By Descending");
+    sortOrder->getClickEvent()->subscribe([sortOrder](brls::View* view) {
+        if(ARCadiaConfig::sort_desc){
+            ARCadiaConfig::sort_desc = false;
+            sortOrder->setChecked(false);
         }else{
-            brls::Application::notify("UMM Path does not exist! Will only display Workspaces and Settings!");
+            ARCadiaConfig::sort_desc = true;
+            sortOrder->setChecked(true);
         }
 
-        rootFrame->addTab("Workspaces", mods.workspaces());
+        if(!ARCadiaConfig::write("config", "sort_desc", std::to_string(ARCadiaConfig::sort_desc))){
+            brls::Application::notify("Failed writing to config file!");
+        }
 
-        rootFrame->addTab("Settings", optionsList);
+    });
 
+    sortOrder->setChecked(ARCadiaConfig::sort_desc);
 
-        // Add the root view to the stack
-        brls::Application::pushView(rootFrame);
+    sortOption->getValueSelectedEvent()->subscribe([=](size_t selection) {
+        std::string selected_sort;
+
+        switch(selection){
+            case 0:
+                selected_sort = "name";
+                break;
+            case 1:
+                selected_sort = "dateM";
+                break;
+            default:
+                selected_sort = "name";
+        }
+
+        if(ARCadiaConfig::write("config", "sort_option", selected_sort)){
+            ARCadiaConfig::sort_option = selected_sort;
+        }else{
+            brls::Application::notify("Failed writing to config file!");
+        };
+    });
+
+    std::string sort_option = ARCadiaConfig::sort_option;
+
+    if (sort_option == "name")
+    {
+        sortOption->setSelectedValue(0);
     }
+    else if (sort_option == "dateM")
+    {
+        sortOption->setSelectedValue(1);
+    }
+
+    brls::Label* skylinePluginsLabel = new brls::Label(brls::LabelStyle::REGULAR, "Skyline Plugins", true);
+    optionsList->addView(skylinePluginsLabel);
+
+
+    for(auto view : mods.skylinePlugins()){
+        optionsList->addView(view);
+    }
+
+
+    rootFrame->addTab("Skyline Plugins", optionsList);
+
+
+    // Add the root view to the stack
+    brls::Application::pushView(rootFrame);
+
     // Run the app
     while (brls::Application::mainLoop())
         ;

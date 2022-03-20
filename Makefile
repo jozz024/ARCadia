@@ -37,13 +37,12 @@ include $(DEVKITPRO)/libnx/switch_rules
 #   of a homebrew executable (.nro). This is intended to be used for sysmodules.
 #   NACP building is skipped as well.
 #---------------------------------------------------------------------------------
-TARGET		:=	arcadia
+TARGET		:=	upt
 BUILD		:=	build.nx
 SOURCES		:=	source
 DATA		:=	data
-ICON		:=	resources/icon/icon.jpg
 INCLUDES	:=	include
-APP_TITLE	:=	ARCadia
+APP_TITLE	:=	Ultimate Plugin Toggler
 APP_AUTHOR	:=	Coolsonickirby, Raytwo, Kalomaze, CVillacura
 APP_VERSION	:=	2.0
 
