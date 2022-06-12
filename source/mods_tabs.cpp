@@ -17,6 +17,20 @@
 
 #define QUASAR_WORKSPACES "sdmc://Quasar"
 
+u64 runningTID2()
+{
+  u64 pid = 0;
+  u64 tid = 0;
+  pmdmntInitialize();
+  pminfoInitialize();
+  pmdmntGetApplicationProcessId(&pid);
+  pminfoGetProgramId(&tid, pid);
+  pminfoExit();
+  pmdmntExit();
+  return tid;
+}
+
+
 std::string replace(std::string str, const std::string from, const std::string to)
 {
     size_t start_pos = str.find(from);
@@ -45,9 +59,9 @@ bool compareFunction(const ModInfo& lhs, const ModInfo& rhs) { return lhs.name <
 std::vector<brls::ListItem*> ModsList::skylinePlugins()
 {
     std::vector<brls::ListItem*> skylineList;
-
-    std::string enabled_path  = "sdmc://atmosphere/contents/01006A800016E000/romfs/skyline/plugins/";
-    std::string disabled_path = "sdmc://atmosphere/contents/01006A800016E000/romfs/skyline/disabled_plugins/";
+    std::string tid = fmt::format("{:x}", runningTID2());
+    std::string enabled_path  = fmt::format("sdmc://atmosphere/contents/0{}/romfs/skyline/plugins/", tid);
+    std::string disabled_path = fmt::format("sdmc://atmosphere/contents/0{}/romfs/skyline/disabled_plugins/", tid);
 
     if (std::filesystem::exists(enabled_path))
     {

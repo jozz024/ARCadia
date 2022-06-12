@@ -32,6 +32,18 @@
 #define MAIN_NPDM "sdmc://atmosphere/contents/01006A800016E000/exefs/main.npdm"
 #define ROM_PATH "sd://atmosphere/contents/01006A800016E000/romfs/"
 
+u64 runningTID()
+{
+  u64 pid = 0;
+  u64 tid = 0;
+  pmdmntInitialize();
+  pminfoInitialize();
+  pmdmntGetApplicationProcessId(&pid);
+  pminfoGetProgramId(&tid, pid);
+  pminfoExit();
+  pmdmntExit();
+  return tid;
+}
 
 int main(int argc, char* argv[])
 {
@@ -60,8 +72,8 @@ int main(int argc, char* argv[])
     else if(!std::filesystem::exists(SUBSDK_9))
         rootFrame->setFooterText("subsdk_9 is missing!");
 
-    rootFrame->registerAction("Launch Smash Ultimate", brls::Key::X, [] {
-        appletRequestLaunchApplication(0x01006A800016E000, NULL);
+    rootFrame->registerAction("Launch Current Game", brls::Key::X, [] {
+        appletRequestLaunchApplication(runningTID(), NULL);
         return true;
     });
 
